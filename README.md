@@ -10,3 +10,7 @@
 
 This repository cotnains the workload applications that we use to evaluate SC2 as part of our
 [experiments](https://github.com/sc2-sys/experiments).
+
+All applications in SC2 are Knative applications, and we differenttiate between:
+- [`./functions`](./functions) - individual Knative services.
+- [`./workflows`](./workflows) - multi-function serverless workflows with Knative Eventing.
