@@ -20,7 +20,7 @@ spec:
       securityContext:
         runAsUser: 1000
       containers:
-        - image: ${CTR_REGISTRY_URL}/helloworld-py:unencrypted
+        - image: ${CTR_REGISTRY_URL}/helloworld-py:unencrypted-nydus
           ports:
             - containerPort: 8080
           env:
