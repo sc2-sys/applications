@@ -5,12 +5,16 @@ pub const CONTAINER_REGISTRY_URL: &str = "sc2cr.io/applications";
 
 #[derive(Clone, Debug, ValueEnum)]
 pub enum Functions {
+    Fio,
+    HelloWorld,
     TfInference,
 }
 
 impl fmt::Display for Functions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Functions::Fio => write!(f, "fio"),
+            Functions::HelloWorld => write!(f, "hello-world"),
             Functions::TfInference => write!(f, "tf-inference"),
         }
     }
@@ -21,6 +25,8 @@ impl FromStr for Functions {
 
     fn from_str(input: &str) -> Result<Functions, Self::Err> {
         match input {
+            "fio" => Ok(Functions::Fio),
+            "hello-world" => Ok(Functions::HelloWorld),
             "tf-inference" => Ok(Functions::TfInference),
             _ => Err(()),
         }
@@ -29,7 +35,7 @@ impl FromStr for Functions {
 
 impl Functions {
     pub fn iter_variants() -> std::slice::Iter<'static, Functions> {
-        static VARIANTS: [Functions; 1] = [Functions::TfInference];
+        static VARIANTS: [Functions; 3] = [Functions::Fio, Functions::HelloWorld, Functions::TfInference];
         VARIANTS.iter()
     }
 }
@@ -71,7 +77,7 @@ impl ImageTags {
     }
 }
 
-pub fn do_docker_build(dockerfile: String, full_image_tag: String) {
+pub fn do_docker_build(dockerfile: String, full_image_tag: String, image_path: String) {
     // ----- Build image -----
 
     let mut cmd = process::Command::new("docker");
@@ -81,7 +87,7 @@ pub fn do_docker_build(dockerfile: String, full_image_tag: String) {
         .arg(full_image_tag.clone())
         .arg("-f")
         .arg(dockerfile)
-        .arg(".");
+        .arg(image_path);
 
     cmd.stdout(process::Stdio::inherit())
         .stderr(process::Stdio::inherit())
@@ -138,6 +144,7 @@ pub fn build_fn_images(functions: Vec<Functions>) {
                     do_docker_build(
                         dockerfile_path.to_string_lossy().into_owned(),
                         full_image_tag,
+                        dockerfile_path.parent().unwrap().to_string_lossy().into_owned(),
                     );
                 }
                 ImageTags::UnencryptedNydus => {
@@ -190,7 +197,7 @@ fn main() {
     let functions = if let Some(function_name) = matches.get_one::<Functions>("function") {
         vec![function_name.clone()]
     } else {
-        vec![Functions::TfInference]
+        vec![Functions::Fio, Functions::HelloWorld, Functions::TfInference]
     };
 
     build_fn_images(functions);

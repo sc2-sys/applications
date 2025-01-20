@@ -6,7 +6,7 @@ metadata:
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: helloworld-py
+  name: fio
   namespace: ${SC2_NAMESPACE}
 spec:
   template:
@@ -14,15 +14,10 @@ spec:
       annotations:
         io.containerd.cri.runtime-handler: ${RUNTIME_CLASS_NAME}
       labels:
-        apps.sc2.io/name: helloworld-py
+        apps.sc2.io/name: fio
     spec:
       runtimeClassName: ${RUNTIME_CLASS_NAME}
-      securityContext:
-        runAsUser: 1000
       containers:
-        - image: ${CTR_REGISTRY_URL}/helloworld-py:unencrypted-nydus
+        - image: ${CTR_REGISTRY_URL}/fio:${IMAGE_TAG}
           ports:
             - containerPort: 8080
-          env:
-            - name: TARGET
-              value: "World"
