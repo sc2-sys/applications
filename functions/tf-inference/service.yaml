@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${SC2_NAMESPACE}
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: tf-inference
+  namespace: ${SC2_NAMESPACE}
+spec:
+  template:
+    metadata:
+      annotations:
+        io.containerd.cri.runtime-handler: ${RUNTIME_CLASS_NAME}
+      labels:
+        apps.sc2.io/name: tf-inference
+    spec:
+      runtimeClassName: ${RUNTIME_CLASS_NAME}
+      containers:
+        - image: ${CTR_REGISTRY_URL}/tf-inference:${IMAGE_TAG}
+          ports:
+            - containerPort: 8501
