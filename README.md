@@ -14,3 +14,10 @@ This repository cotnains the workload applications that we use to evaluate SC2 a
 All applications in SC2 are Knative applications, and we differenttiate between:
 - [`./functions`](./functions) - individual Knative services.
 - [`./workflows`](./workflows) - multi-function serverless workflows with Knative Eventing.
+
+To upload all function and workflow images necessary for the experiments, just
+run:
+
+```bash
+cargo run --release
+```
