@@ -1,5 +1,10 @@
 use clap::{Arg, Command, ValueEnum};
-use std::{env, fmt, process, str::FromStr};
+use std::{
+    env, fmt,
+    path::{Path, PathBuf},
+    process,
+    str::FromStr,
+};
 
 pub const CONTAINER_REGISTRY_URL: &str = "sc2cr.io/applications";
 
@@ -35,7 +40,11 @@ impl FromStr for Functions {
 
 impl Functions {
     pub fn iter_variants() -> std::slice::Iter<'static, Functions> {
-        static VARIANTS: [Functions; 3] = [Functions::Fio, Functions::HelloWorld, Functions::TfInference];
+        static VARIANTS: [Functions; 3] = [
+            Functions::Fio,
+            Functions::HelloWorld,
+            Functions::TfInference,
+        ];
         VARIANTS.iter()
     }
 }
@@ -107,11 +116,11 @@ pub fn do_docker_build(dockerfile: String, full_image_tag: String, image_path: S
 }
 
 pub fn do_nydusify(docker_tag: String, nydus_tag: String) {
-    let mut nydusify_bin = env::current_dir().unwrap();
-    nydusify_bin.push("..");
-    nydusify_bin.push("deploy");
-    nydusify_bin.push("bin");
-    nydusify_bin.push("nydusify");
+    let nydusify_bin = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("deploy")
+        .join("bin")
+        .join("nydusify");
 
     let mut cmd = process::Command::new(nydusify_bin);
     cmd.arg("convert")
@@ -120,7 +129,14 @@ pub fn do_nydusify(docker_tag: String, nydus_tag: String) {
         .arg(docker_tag)
         .arg("--target-insecure")
         .arg("--target")
-        .arg(nydus_tag);
+        .arg(nydus_tag)
+        .env(
+            "PATH",
+            format!(
+                "{}:/opt/confidential-containers/bin",
+                env::var("PATH").unwrap()
+            ),
+        );
 
     cmd.stdout(process::Stdio::inherit())
         .stderr(process::Stdio::inherit())
@@ -144,7 +160,11 @@ pub fn build_fn_images(functions: Vec<Functions>) {
                     do_docker_build(
                         dockerfile_path.to_string_lossy().into_owned(),
                         full_image_tag,
-                        dockerfile_path.parent().unwrap().to_string_lossy().into_owned(),
+                        dockerfile_path
+                            .parent()
+                            .unwrap()
+                            .to_string_lossy()
+                            .into_owned(),
                     );
                 }
                 ImageTags::UnencryptedNydus => {
@@ -162,6 +182,17 @@ pub fn build_fn_images(functions: Vec<Functions>) {
 }
 
 fn main() {
+    // Sanity check
+    if !Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("deploy")
+        .exists()
+    {
+        println!("ERROR: sc2-sys deploy repository not found in ../deploy");
+        println!("ERROR: clone the repository and run 'inv sc2.deploy --clean'");
+        process::exit(1);
+    }
+
     // Define the command-line interface
     let matches = Command::new("Argument Parser")
         .version("1.0")
@@ -197,7 +228,11 @@ fn main() {
     let functions = if let Some(function_name) = matches.get_one::<Functions>("function") {
         vec![function_name.clone()]
     } else {
-        vec![Functions::Fio, Functions::HelloWorld, Functions::TfInference]
+        vec![
+            Functions::Fio,
+            Functions::HelloWorld,
+            Functions::TfInference,
+        ]
     };
 
     build_fn_images(functions);
